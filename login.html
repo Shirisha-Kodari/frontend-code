@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Sign In — Paper &amp; Ink</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body { height: 100%; display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: #faf8f5; color: #1c1c1c; }
+.hdr { flex-shrink: 0; height: 68px; background: #fff; border-bottom: 3px solid #c0392b; box-shadow: 0 2px 8px rgba(0,0,0,.08); display: flex; align-items: center; padding: 0 40px; }
+.hdr-brand { display: flex; flex-direction: column; line-height: 1.1; text-decoration: none; }
+.hdr-logo { font-family: Georgia, serif; font-size: 24px; font-weight: 700; color: #1c1c1c; }
+.hdr-logo .r { color: #c0392b; }
+.hdr-logo .g { color: #1e6641; }
+.hdr-tag { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #888; margin-top: 2px; }
+.hdr-yt { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; padding: 8px 18px 8px 12px; background: #fff; border: 1.5px solid #ddd; border-radius: 30px; font-size: 15px; font-weight: 700; color: #1c1c1c; text-decoration: none; box-shadow: 0 2px 8px rgba(0,0,0,.08); white-space: nowrap; }
+.hdr-yt:hover { border-color: #f00; }
+.wrap { flex: 1; display: grid; grid-template-columns: 1fr 1fr; min-height: 0; }
+.panel-left { background: #16213e; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 60px; }
+.panel-left::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 60%, rgba(192,57,43,.35) 0%, transparent 55%), radial-gradient(ellipse at 80% 20%, rgba(30,102,65,.25) 0%, transparent 50%); pointer-events: none; }
+.panel-left::after { content: ''; position: absolute; inset: 0; opacity: .04; background-image: repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%); background-size: 24px 24px; pointer-events: none; }
+.v-content { position: relative; z-index: 1; }
+.v-eyebrow { display: inline-block; font-size: 11px; letter-spacing: 3.5px; text-transform: uppercase; color: #d4890a; background: rgba(212,137,10,.12); padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(212,137,10,.3); margin-bottom: 22px; }
+.v-title { font-family: Georgia, serif; font-size: 42px; font-weight: 700; line-height: 1.1; color: #fff; margin-bottom: 18px; white-space: nowrap; }
+.v-title em { color: #e88370; font-style: italic; }
+.v-sub { font-size: 15px; color: rgba(255,255,255,.55); line-height: 1.75; max-width: 360px; margin-bottom: 40px; }
+.v-feats { display: flex; flex-direction: column; gap: 16px; }
+.v-feat { display: flex; align-items: center; gap: 14px; }
+.v-feat-icon { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+.v-feat-text { font-size: 13px; color: rgba(255,255,255,.6); }
+.v-feat-text strong { display: block; color: rgba(255,255,255,.88); font-size: 14px; margin-bottom: 2px; }
+.panel-right { background: #faf8f5; display: flex; align-items: center; justify-content: center; padding: 48px 40px; overflow-y: auto; }
+.form-box { width: 100%; max-width: 420px; }
+.form-brand { font-family: Georgia, serif; font-size: 30px; font-weight: 700; color: #1c1c1c; margin-bottom: 36px; display: block; }
+.form-brand .r { color: #c0392b; }
+.form-brand .g { color: #1e6641; }
+.tabs { display: flex; background: #fff; border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 32px; border: 1.5px solid #e4ddd5; }
+.tab { flex: 1; padding: 11px; border-radius: 9px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; background: transparent; color: #888; font-family: inherit; }
+.tab.on { background: #c0392b; color: #fff; box-shadow: 0 2px 8px rgba(192,57,43,.3); }
+.sec { display: none; }
+.sec.on { display: block; }
+.fg { margin-bottom: 20px; }
+.fl { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #888; margin-bottom: 8px; }
+.fi { width: 100%; padding: 13px 16px; border: 1.5px solid #e4ddd5; border-radius: 10px; font-size: 15px; color: #1c1c1c; background: #fff; outline: none; transition: border-color .15s, box-shadow .15s; font-family: inherit; }
+.fi:focus { border-color: #c0392b; box-shadow: 0 0 0 3px rgba(192,57,43,.08); }
+.err-box { background: #fdecea; border: 1px solid rgba(192,57,43,.2); color: #c0392b; font-size: 13px; padding: 11px 14px; border-radius: 8px; margin-bottom: 18px; display: none; }
+.submit { width: 100%; padding: 14px; background: #c0392b; color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s; margin-top: 8px; font-family: inherit; }
+.submit:hover { background: #a93226; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(192,57,43,.3); }
+.divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: #bbb; font-size: 12px; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e4ddd5; }
+.guest { width: 100%; padding: 12px; background: transparent; color: #444; border: 1.5px solid #e4ddd5; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .2s; font-family: inherit; }
+.guest:hover { border-color: #1e6641; color: #1e6641; background: #e8f5ee; }
+@media(max-width:768px) { .wrap { grid-template-columns: 1fr; } .panel-left { display: none; } .panel-right { padding: 32px 20px; } }
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a href="login.html" class="hdr-brand">
+    <span class="hdr-logo">Paper<span class="r">&amp;</span><span class="g">Ink</span></span>
+    <span class="hdr-tag">Premium Stationery</span>
+  </a>
+  <a href="https://www.youtube.com/@DevSecOps.CloudnAI-1.0" target="_blank" class="hdr-yt">
+    <svg width="32" height="22" viewBox="0 0 32 22" xmlns="http://www.w3.org/2000/svg"><rect width="32" height="22" rx="5" fill="#FF0000"/><polygon points="13,6 13,16 22,11" fill="white"/></svg>
+    <span>DevSecOps.CloudnAI</span>
+  </a>
+</header>
+<div class="wrap">
+  <div class="panel-left">
+    <div class="v-content">
+      <span class="v-eyebrow">New arrivals · Season 2025</span>
+      <h2 class="v-title">Write your <em>story</em> beautifully.</h2>
+      <p class="v-sub">Premium stationery, notebooks, art supplies &amp; office essentials — delivered across India.</p>
+      <div class="v-feats">
+        <div class="v-feat"><div class="v-feat-icon">🚚</div><div class="v-feat-text"><strong>Free shipping</strong>On orders above ₹499</div></div>
+        <div class="v-feat"><div class="v-feat-icon">↩️</div><div class="v-feat-text"><strong>Easy returns</strong>Hassle-free 7-day returns</div></div>
+        <div class="v-feat"><div class="v-feat-icon">🔒</div><div class="v-feat-text"><strong>Secure payments</strong>UPI · Cards · COD accepted</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel-right">
+    <div class="form-box">
+      <span class="form-brand">Paper<span class="r">&amp;</span><span class="g">Ink</span></span>
+      <div class="tabs">
+        <button class="tab on" id="t1" onclick="sw('signin')">Sign in</button>
+        <button class="tab" id="t2" onclick="sw('register')">Create account</button>
+      </div>
+      <div class="sec on" id="signin">
+        <div class="err-box" id="loginErr"></div>
+        <div class="fg"><label class="fl">Username</label><input type="text" id="loginName" class="fi" placeholder="your username" autocomplete="username"/></div>
+        <div class="fg"><label class="fl">Password</label><input type="password" id="loginPass" class="fi" placeholder="••••••••" autocomplete="current-password" onkeyup="if(event.key==='Enter')doLogin()"/></div>
+        <button class="submit" onclick="doLogin()">Sign in →</button>
+        <div class="divider">or</div>
+        <button class="guest" onclick="goGuest()">Continue as guest</button>
+      </div>
+      <div class="sec" id="register">
+        <div class="err-box" id="regErr"></div>
+        <div class="fg"><label class="fl">Username</label><input type="text" id="regName" class="fi" placeholder="choose a username"/></div>
+        <div class="fg"><label class="fl">Email</label><input type="email" id="regEmail" class="fi" placeholder="you@example.com"/></div>
+        <div class="fg"><label class="fl">Password</label><input type="password" id="regPass" class="fi" placeholder="minimum 6 characters"/></div>
+        <button class="submit" onclick="doRegister()">Create account →</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function sw(tab) {
+  document.getElementById('t1').classList.toggle('on', tab==='signin');
+  document.getElementById('t2').classList.toggle('on', tab==='register');
+  document.getElementById('signin').classList.toggle('on', tab==='signin');
+  document.getElementById('register').classList.toggle('on', tab==='register');
+}
+function goGuest() {
+  sessionStorage.setItem('user', JSON.stringify({ name: 'Guest', guest: true }));
+  window.location = 'search.html';
+}
+async function doLogin() {
+  const name = document.getElementById('loginName').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginErr');
+  err.style.display = 'none';
+  if (!name || !pass) { err.textContent = 'Please enter username and password'; err.style.display = 'block'; return; }
+  try {
+    const r = await fetch('/api/user/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, password:pass}) });
+    if (r.ok) {
+      const u = await r.json();
+      sessionStorage.setItem('user', JSON.stringify(u));
+      const oldId = sessionStorage.getItem('cart-id');
+      if (oldId && oldId !== name) { await fetch('/api/cart/rename/'+oldId+'/'+name).catch(()=>{}); sessionStorage.setItem('cart-id', name); }
+      window.location = 'search.html';
+    } else { err.textContent = await r.text() || 'Login failed'; err.style.display = 'block'; }
+  } catch(e) { err.textContent = 'Could not reach user service'; err.style.display = 'block'; }
+}
+async function doRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const err = document.getElementById('regErr');
+  err.style.display = 'none';
+  if (!name || !email || !pass) { err.textContent = 'All fields are required'; err.style.display = 'block'; return; }
+  try {
+    const r = await fetch('/api/user/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name, email, password:pass}) });
+    if (r.ok) { sw('signin'); document.getElementById('loginName').value = name; }
+    else { err.textContent = await r.text() || 'Registration failed'; err.style.display = 'block'; }
+  } catch(e) { err.textContent = 'Could not reach user service'; err.style.display = 'block'; }
+}
+</script>
+</body>
+</html>

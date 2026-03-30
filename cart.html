@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Your Cart — Paper &amp; Ink</title>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-logo">Paper<span class="amp">&amp;</span><span class="ink-word">Ink</span></span>
+      <span class="brand-tagline">Premium Stationery</span>
+    </a>
+    <nav class="main-nav">
+      <a href="search.html">Browse</a>
+      <a href="search.html?cat=Writing">Writing</a>
+      <a href="search.html?cat=Notebooks">Notebooks</a>
+      <a href="search.html?cat=Art">Art</a>
+      <a href="search.html?cat=Office">Office</a>
+    </nav>
+    <div class="header-actions">
+      <a href="login.html" class="icon-btn" id="userIcon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </a>
+      <a href="cart.html" class="icon-btn cart-wrap" style="color:#c0392b">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <span class="cart-badge" id="cartBadge" style="display:none">0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="container cart-page">
+  <h1 class="page-title">Your cart</h1>
+  <div id="cartRoot"><div class="skeleton" style="height:300px"></div></div>
+</div>
+
+<footer class="site-footer">
+  <div class="container footer-bottom">&copy; 2025 Paper &amp; Ink.</div>
+</footer>
+
+<div id="toast"></div>
+<script src="js/controller.js"></script>
+<script>
+(function() { if (!sessionStorage.getItem('user')) window.location.replace('login.html'); })();
+document.addEventListener('DOMContentLoaded', () => { updateCartBadge(); loadCart(); });
+
+async function loadCart() {
+  const id = getCartId();
+  const root = document.getElementById('cartRoot');
+  try {
+    const r = await fetch('/api/cart/cart/' + id);
+    if (r.status === 404) { renderEmpty(root); return; }
+    const cart = await r.json();
+    if (!cart.items || !cart.items.length) { renderEmpty(root); return; }
+    renderCart(root, cart);
+  } catch(e) {
+    root.innerHTML = '<p style="color:#c44;padding:2rem 0">Could not reach cart service. Please check the services are running.</p>';
+  }
+}
+
+function renderEmpty(root) {
+  root.innerHTML = '<div class="cart-empty"><div class="cart-empty-icon">🛒</div><h2>Your basket is empty</h2><p>Add some stationery to get started!</p><a href="search.html" class="btn btn-primary btn-lg" style="margin-top:16px">Continue shopping</a></div>';
+}
+
+function renderCart(root, cart) {
+  const items = (cart.items||[]).filter(i=>i.sku!=='SHIP');
+  const ship  = (cart.items||[]).find(i=>i.sku==='SHIP');
+  const subtotal = items.reduce((a,i)=>a+i.subtotal,0);
+  const gst = Math.round(subtotal * 0.18);
+  const shipCost = ship ? ship.price : 0;
+  const total = subtotal + gst + shipCost;
+  const shippingNote = subtotal >= 499
+    ? '<p class="free-ship-note">✓ You qualify for free shipping!</p>'
+    : '<p class="add-more-note">Add ₹' + (499 - subtotal).toLocaleString('en-IN') + ' more for free shipping</p>';
+
+  root.innerHTML = `
+    <div class="cart-layout">
+      <div>
+        <div class="cart-box">
+          <div class="cart-box-hdr">
+            <span>Product</span><span>Qty</span><span>Subtotal</span>
+          </div>
+          ${items.map(i=>`
+          <div class="cart-item">
+            <div class="ci-icon">${getSkuIcon(i.sku)}</div>
+            <div class="ci-info">
+              <div class="ci-name">${i.name}</div>
+              <div class="ci-unit">₹${i.price.toLocaleString('en-IN')} each</div>
+            </div>
+            <div class="ci-qty">
+              <button class="qty-ctrl" onclick="updateItem('${i.sku}',${i.qty-1})">−</button>
+              <span style="font-size:14px;font-weight:700;min-width:24px;text-align:center">${i.qty}</span>
+              <button class="qty-ctrl" onclick="updateItem('${i.sku}',${i.qty+1})">+</button>
+            </div>
+            <div class="ci-sub">₹${i.subtotal.toLocaleString('en-IN')}</div>
+            <button class="ci-del" onclick="updateItem('${i.sku}',0)" title="Remove">×</button>
+          </div>`).join('')}
+        </div>
+        <a href="search.html" class="continue-link" style="margin-top:16px;display:inline-block">&larr; Continue shopping</a>
+      </div>
+      <div class="summary-card">
+        <h3 class="summary-title">Order summary</h3>
+        <div class="sum-row"><span>Subtotal (${items.reduce((a,i)=>a+i.qty,0)} items)</span><span>₹${subtotal.toLocaleString('en-IN')}</span></div>
+        <div class="sum-row"><span>GST @ 18%</span><span>₹${gst.toLocaleString('en-IN')}</span></div>
+        <div class="sum-row"><span>Shipping</span><span>${ship ? '₹'+shipCost.toLocaleString('en-IN') : '<span style="font-size:12px;color:#777">Calculated next step</span>'}</span></div>
+        <div class="sum-total">
+          <span>Total</span>
+          <span>₹${total.toLocaleString('en-IN')}</span>
+        </div>
+        ${shippingNote}
+        <a href="shipping.html" class="btn btn-primary btn-block" style="margin-top:20px">Proceed to shipping →</a>
+      </div>
+    </div>`;
+}
+
+async function updateItem(sku, qty) {
+  const id = getCartId();
+  try { await fetch('/api/cart/update/'+id+'/'+sku+'/'+qty); loadCart(); updateCartBadge(); }
+  catch(e) { showToast('Update failed','warn'); }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Product — Paper &amp; Ink</title>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="brand">
+      <span class="brand-logo">Paper<span class="amp">&amp;</span><span class="ink-word">Ink</span></span>
+      <span class="brand-tagline">Premium Stationery</span>
+    </a>
+    <nav class="main-nav">
+      <a href="search.html">Browse</a>
+      <a href="search.html?cat=Writing">Writing</a>
+      <a href="search.html?cat=Notebooks">Notebooks</a>
+      <a href="search.html?cat=Art">Art</a>
+      <a href="search.html?cat=Office">Office</a>
+    </nav>
+    <div class="header-actions">
+      <a href="login.html" class="icon-btn" id="userIcon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </a>
+      <a href="cart.html" class="icon-btn cart-wrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <span class="cart-badge" id="cartBadge" style="display:none">0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="container product-detail" id="pdContainer">
+  <div class="skeleton" style="height:400px;border-radius:16px"></div>
+</div>
+
+<footer class="site-footer">
+  <div class="container footer-bottom">&copy; 2025 Paper &amp; Ink.</div>
+</footer>
+
+<div id="toast"></div>
+<script src="js/controller.js"></script>
+<script>
+(function() { if (!sessionStorage.getItem('user')) window.location.replace('login.html'); })();
+let currentQty = 1;
+document.addEventListener('DOMContentLoaded', async () => {
+  updateCartBadge();
+  const sku = new URLSearchParams(window.location.search).get('sku');
+  if (!sku) { window.location = 'search.html'; return; }
+  try {
+    const p = await (await fetch('/api/catalogue/product/' + sku)).json();
+    document.title = p.name + ' — Paper & Ink';
+    renderProduct(p);
+  } catch(e) {
+    document.getElementById('pdContainer').innerHTML = '<p style="padding:3rem 0;color:#888">Product not found.</p>';
+  }
+});
+
+function renderProduct(p) {
+  const icon = getSkuIcon(p.sku);
+  const instock = p.instock > 0;
+  const stockHtml = p.instock === 0
+    ? '<span class="stock-chip stock-out">⬤ Out of stock</span>'
+    : p.instock <= 5
+      ? '<span class="stock-chip stock-low">⬤ Only ' + p.instock + ' left</span>'
+      : '<span class="stock-chip stock-ok">⬤ In stock (' + p.instock + ' units)</span>';
+
+  document.getElementById('pdContainer').innerHTML = `
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> ›
+      <a href="search.html">Shop</a> ›
+      ${(p.categories||[]).map(c=>`<a href="search.html?cat=${c}">${c}</a>`).join(' › ')} ›
+      ${p.name}
+    </div>
+    <div class="pd-grid">
+      <div class="pd-image-box">
+        <div class="pd-big-icon">${icon}</div>
+        <div class="pd-cats">
+          ${(p.categories||[]).map(c=>`<a href="search.html?cat=${c}" class="pill">${c}</a>`).join('')}
+        </div>
+      </div>
+      <div class="pd-info">
+        <div class="pd-sku">SKU: ${p.sku}</div>
+        <h1 class="pd-name">${p.name}</h1>
+        <div class="pd-price">₹${p.price.toLocaleString('en-IN')}</div>
+        ${stockHtml}
+        <p class="pd-desc">${p.description}</p>
+        <div class="qty-row">
+          <span class="qty-label">Quantity</span>
+          <button class="qty-ctrl" onclick="changeQty(-1)">−</button>
+          <span class="qty-display" id="qtyDisplay">1</span>
+          <button class="qty-ctrl" onclick="changeQty(1)">+</button>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" id="addBtn"
+          onclick="addToCart('${p.sku}','${p.name.replace(/'/g,"&#39;")}',${p.instock})"
+          ${instock ? '' : 'disabled'}>
+          ${instock ? '🛒 Add to cart' : 'Out of stock'}
+        </button>
+        <div class="pd-meta">
+          <div class="meta-row"><span>SKU</span><span>${p.sku}</span></div>
+          <div class="meta-row"><span>Category</span><span>${(p.categories||[]).join(', ')}</span></div>
+          <div class="meta-row"><span>Availability</span><span>${instock ? p.instock + ' units available' : 'Currently unavailable'}</span></div>
+          <div class="meta-row"><span>GST</span><span>18% included</span></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function changeQty(d) {
+  currentQty = Math.max(1, currentQty + d);
+  document.getElementById('qtyDisplay').textContent = currentQty;
+}
+
+async function addToCart(sku, name, instock) {
+  if (!instock) return;
+  const cartId = getCartId();
+  try {
+    const r = await fetch('/api/cart/add/' + cartId + '/' + sku + '/' + currentQty);
+    if (r.ok) { showToast('✓ ' + name + ' added to cart!', 'success'); updateCartBadge(); }
+    else showToast('⚠ ' + await r.text(), 'warn');
+  } catch(e) { showToast('⚠ Cart service unavailable', 'warn'); }
+}
+</script>
+</body>
+</html>
